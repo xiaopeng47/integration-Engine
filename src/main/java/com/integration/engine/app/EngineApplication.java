@@ -4,6 +4,9 @@ import com.integration.engine.core.EventContext;
 import com.integration.engine.ir.AppModel;
 import com.integration.engine.parser.MuleXmlParser;
 import com.integration.engine.processor.ProcessorRegistry;
+import com.integration.engine.processor.builtin.ChoiceProcessor;
+import com.integration.engine.processor.builtin.FlowRefProcessor;
+import com.integration.engine.processor.builtin.ForEachProcessor;
 import com.integration.engine.processor.builtin.LoggerProcessor;
 import com.integration.engine.processor.builtin.SetVariableProcessor;
 import com.integration.engine.runtime.EngineRuntime;
@@ -29,6 +32,9 @@ public final class EngineApplication {
         ProcessorRegistry registry = new ProcessorRegistry();
         registry.register("logger", new LoggerProcessor());
         registry.register("set-variable", new SetVariableProcessor());
+        registry.register("flow-ref", new FlowRefProcessor());
+        registry.register("for-each", new ForEachProcessor());
+        registry.register("choice", new ChoiceProcessor());
 
         EngineRuntime runtime = new EngineRuntime(model, registry);
         EventContext context = EventContext.empty().withPayload("bootstrap");

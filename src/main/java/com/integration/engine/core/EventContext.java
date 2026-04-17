@@ -63,8 +63,16 @@ public final class EventContext {
 
     public EventContext withMetadata(String key, Object value) {
         Objects.requireNonNull(key, "key must not be null");
+        Objects.requireNonNull(value, "value must not be null");
         Map<String, Object> copy = new HashMap<>(metadata);
         copy.put(key, value);
+        return new EventContext(payload, attributes, variables, copy, error);
+    }
+
+    public EventContext withoutMetadata(String key) {
+        Objects.requireNonNull(key, "key must not be null");
+        Map<String, Object> copy = new HashMap<>(metadata);
+        copy.remove(key);
         return new EventContext(payload, attributes, variables, copy, error);
     }
 

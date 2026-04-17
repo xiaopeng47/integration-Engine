@@ -39,7 +39,7 @@ public class MuleXmlParser {
                 }
 
                 String flowName = element.getAttribute("name");
-                flows.add(new FlowModel(flowName, parseFlowNodes(element)));
+                flows.add(new FlowModel(flowName, parseChildNodes(element)));
             }
             return AppModel.of(flows);
         } catch (Exception e) {
@@ -47,19 +47,30 @@ public class MuleXmlParser {
         }
     }
 
-    private List<NodeModel> parseFlowNodes(Element flowElement) {
+    private List<NodeModel> parseChildNodes(Element parent) {
         List<NodeModel> nodes = new ArrayList<>();
-        NodeList children = flowElement.getChildNodes();
+        NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
             if (!(node instanceof Element child)) {
                 continue;
             }
+
             String type = normalizeType(child);
-            String name = child.getAttribute("doc:name");
-            nodes.add(new NodeModel(type, name == null ? "" : name, attributesOf(child)));
+            String name = resolveDocName(child);
+            List<NodeModel> nested = parseChildNodes(child);
+            nodes.add(new NodeModel(type, name, attributesOf(child), nested));
         }
         return nodes;
+    }
+
+    private String resolveDocName(Element element) {
+        String value = element.getAttribute("doc:name");
+        if (value != null && !value.isBlank()) {
+            return value;
+        }
+        String namespaceValue = element.getAttributeNS("http://www.mulesoft.org/schema/mule/documentation", "name");
+        return namespaceValue == null ? "" : namespaceValue;
     }
 
     private String normalizeType(Element element) {
@@ -68,6 +79,11 @@ public class MuleXmlParser {
             return "unknown";
         }
         return switch (local) {
+            case "flow-ref" -> "flow-ref";
+            case "for-each" -> "for-each";
+            case "choice" -> "choice";
+            case "when" -> "when";
+            case "otherwise" -> "otherwise";
             case "logger" -> "logger";
             case "set-variable" -> "set-variable";
             default -> local;
