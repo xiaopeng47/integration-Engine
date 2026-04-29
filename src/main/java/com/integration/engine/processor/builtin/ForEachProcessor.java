@@ -22,12 +22,16 @@ public class ForEachProcessor implements Processor {
 
         EventContext current = context;
         String itemVar = node.attributes().getOrDefault("itemVariableName", "item");
+        int index = 0;
         for (Object item : collection) {
-            EventContext perItem = current.withVariable(itemVar, item).withPayload(item);
+            EventContext perItem = current.withVariable(itemVar, item)
+                    .withVariable(itemVar + "Index", index)
+                    .withPayload(item);
             for (NodeModel child : node.children()) {
-                perItem = executionBridge.executeFlow("__inline__", perItem.withMetadata("inline.node", child));
+                perItem = executionBridge.executeInline(child, perItem);
             }
             current = perItem;
+            index++;
         }
         return current;
     }

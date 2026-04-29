@@ -18,7 +18,7 @@ public class ChoiceProcessor implements Processor {
             if ("when".equals(branch.type())) {
                 String expr = branch.attributes().get("expression");
                 Object value = evaluator.resolve(expr, context);
-                if (value instanceof Boolean bool && bool) {
+                if (isTruthy(value)) {
                     return executeBranch(context, branch, executionBridge);
                 }
             }
@@ -29,10 +29,20 @@ public class ChoiceProcessor implements Processor {
         return otherwise == null ? context : executeBranch(context, otherwise, executionBridge);
     }
 
+    private boolean isTruthy(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean b) {
+            return b;
+        }
+        return "true".equalsIgnoreCase(value.toString());
+    }
+
     private EventContext executeBranch(EventContext context, NodeModel branch, ExecutionBridge executionBridge) {
         EventContext current = context;
         for (NodeModel child : branch.children()) {
-            current = executionBridge.executeFlow("__inline__", current.withMetadata("inline.node", child));
+            current = executionBridge.executeInline(child, current);
         }
         return current;
     }

@@ -25,6 +25,9 @@ public class ExpressionEvaluator {
         }
 
         String expression = matcher.group(1).trim();
+        if (expression.contains("==")) {
+            return evaluateEquals(expression, context);
+        }
         if (expression.startsWith("vars.")) {
             return context.variables().get(expression.substring("vars.".length()));
         }
@@ -34,7 +37,24 @@ public class ExpressionEvaluator {
         if (expression.startsWith("attributes.")) {
             return context.attributes().get(expression.substring("attributes.".length()));
         }
+        if ("true".equalsIgnoreCase(expression) || "false".equalsIgnoreCase(expression)) {
+            return Boolean.parseBoolean(expression);
+        }
         return raw;
+    }
+
+    private boolean evaluateEquals(String expression, EventContext context) {
+        String[] parts = expression.split("==", 2);
+        Object left = resolve("#[" + parts[0].trim() + "]", context);
+        String rightToken = parts[1].trim();
+        Object right;
+        if ((rightToken.startsWith("\"") && rightToken.endsWith("\""))
+                || (rightToken.startsWith("'") && rightToken.endsWith("'"))) {
+            right = rightToken.substring(1, rightToken.length() - 1);
+        } else {
+            right = resolve("#[" + rightToken + "]", context);
+        }
+        return left == null ? right == null : left.toString().equals(right == null ? null : right.toString());
     }
 
     private String interpolate(String raw, EventContext context) {

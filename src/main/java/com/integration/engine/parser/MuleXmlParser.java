@@ -86,6 +86,13 @@ public class MuleXmlParser {
             case "otherwise" -> "otherwise";
             case "logger" -> "logger";
             case "set-variable" -> "set-variable";
+            case "request" -> "http-request";
+            case "listener" -> "http-listener";
+            case "select" -> "jdbc-query";
+            case "try" -> "try";
+            case "on-error-continue" -> "on-error-continue";
+            case "on-error-propagate" -> "on-error-propagate";
+            case "raise-error" -> "fail";
             default -> local;
         };
     }

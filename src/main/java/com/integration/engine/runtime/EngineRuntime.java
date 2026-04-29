@@ -10,7 +10,6 @@ import com.integration.engine.processor.ProcessorRegistry;
 import com.integration.engine.runtime.support.ExecutionBridge;
 
 public class EngineRuntime implements ExecutionBridge {
-    private static final String INLINE_NODE_KEY = "inline.node";
 
     private final AppModel appModel;
     private final ProcessorRegistry processorRegistry;
@@ -30,14 +29,6 @@ public class EngineRuntime implements ExecutionBridge {
 
     @Override
     public EventContext executeFlow(String flowName, EventContext context) {
-        if ("__inline__".equals(flowName)) {
-            Object inlineNode = context.metadata().get(INLINE_NODE_KEY);
-            if (!(inlineNode instanceof NodeModel node)) {
-                return context;
-            }
-            return executeNode(clearInlineNode(context), node);
-        }
-
         FlowModel flow = appModel.flow(flowName)
                 .orElseThrow(() -> new IllegalArgumentException("Flow not found: " + flowName));
 
@@ -48,6 +39,11 @@ public class EngineRuntime implements ExecutionBridge {
         return current;
     }
 
+    @Override
+    public EventContext executeInline(NodeModel node, EventContext context) {
+        return executeNode(context, node);
+    }
+
     public EventContext execute(String flowName, EventContext context) {
         return executeFlow(flowName, context);
     }
@@ -56,9 +52,5 @@ public class EngineRuntime implements ExecutionBridge {
         Processor processor = processorRegistry.find(node.type())
                 .orElseThrow(() -> new IllegalStateException("No processor registered for type: " + node.type()));
         return processor.process(context, node, this, expressionEvaluator);
-    }
-
-    private EventContext clearInlineNode(EventContext context) {
-        return context.withoutMetadata(INLINE_NODE_KEY);
     }
 }
